@@ -1,0 +1,47 @@
+name: Download release artifacts
+description: Download one or more artifacts (reusable infra action)
+
+inputs:
+  release:
+    description: "Release to download. Default 'latest'. If not 'latest', this has to be in the form tags/<tag_name> or <release_id>"
+    required: true
+
+  dir:
+    description: "Target directory to write artifacts to."
+    required: true
+
+  repo:
+    description: "The `org/repo` containing the release. Defaults to the current repo."
+    required: false
+
+  pattern:
+    description: "Regexp pattern to match artifact names."
+    default: "^.*$"
+    required: false
+
+  token:
+    description: "Github token."
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+      - name: Create release artifact folders
+        shell: bash
+        run: |
+          mkdir -p ${{ inputs.dir }}
+
+      - name: Fetch release artifacts
+        uses: dweiss/fetch-gh-release-asset@v1
+        with:
+          repo: ${{ inputs.repo }}
+          version: ${{ inputs.release }}
+          file: ${{ inputs.pattern }}
+          regex: true
+          target: ${{ inputs.dir }}
+          token: ${{ inputs.token || github.token }}
+
+      - name: List downloaded release files 
+        shell: bash
+        run: |
+          ls -al ${{ inputs.dir }}
